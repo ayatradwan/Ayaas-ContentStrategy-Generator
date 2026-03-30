@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Content Strategy Engine</title>
+<title>Ayaa's Content Strategy Engine</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -16,523 +17,670 @@
     --text: #f0f0f0;
     --muted: #6b6b73;
     --tag-bg: #1e2a12;
-    --tag-text: #d4f050;
+    --sidebar-w: 260px;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   body {
-    background: var(--bg);
-    color: var(--text);
+    background: var(--bg); color: var(--text);
     font-family: 'Syne', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
+    min-height: 100vh; display: flex; overflow-x: hidden;
   }
-
-  /* Background grid */
   body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(212,240,80,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(212,240,80,0.03) 1px, transparent 1px);
-    background-size: 60px 60px;
-    pointer-events: none;
-    z-index: 0;
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(212,240,80,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(212,240,80,0.03) 1px, transparent 1px);
+    background-size: 60px 60px; pointer-events: none; z-index: 0;
   }
 
-  .container {
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    width: var(--sidebar-w); height: 100vh;
+    background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; z-index: 10; overflow: hidden;
+  }
+  .sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .sidebar-brand { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--accent); line-height: 1.1; }
+  .sidebar-brand span {
+    display: block; font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 4px;
+  }
+  .sidebar-section { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+  .sidebar-tab-row {
+    display: flex; gap: 0; padding: 10px 12px 4px; flex-shrink: 0;
+  }
+  .sidebar-tab {
+    flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+    background: none; border: 1px solid transparent; border-radius: 7px;
+    cursor: pointer; transition: all 0.15s; text-align: center; font-family: 'Syne', sans-serif;
+  }
+  .sidebar-tab.active { color: var(--accent); background: var(--tag-bg); border-color: rgba(212,240,80,0.2); }
+  .sidebar-tab:hover:not(.active) { color: var(--text); background: var(--surface2); }
+
+  .sidebar-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .sidebar-panel.active { display: flex; }
+
+  .sidebar-list { flex: 1; overflow-y: auto; padding: 4px 12px 12px; }
+  .sidebar-list::-webkit-scrollbar { width: 4px; }
+  .sidebar-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .sidebar-empty { padding: 20px 8px; font-size: 12px; color: var(--muted); line-height: 1.6; text-align: center; }
+
+  .history-item {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 6px; padding: 9px 8px; border-radius: 8px; cursor: pointer;
+    transition: background 0.15s; margin-bottom: 2px; border: 1px solid transparent;
     position: relative;
-    z-index: 1;
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 48px 24px 80px;
   }
+  .history-item:hover { background: var(--surface2); }
+  .history-item.active { background: var(--tag-bg); border-color: rgba(212,240,80,0.2); }
+  .history-item.pinned .history-item-name::before { content: '📌 '; font-size: 10px; }
 
-  /* Header */
-  .header {
-    margin-bottom: 48px;
+  .history-item-info { flex: 1; min-width: 0; cursor: pointer; }
+  .history-item-name {
+    font-size: 13px; font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3;
   }
-  .badge {
-    display: inline-block;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--accent);
-    background: var(--tag-bg);
-    border: 1px solid rgba(212,240,80,0.25);
-    padding: 4px 12px;
-    border-radius: 100px;
-    margin-bottom: 20px;
-  }
-  h1 {
-    font-family: 'DM Serif Display', serif;
-    font-size: clamp(36px, 6vw, 58px);
-    line-height: 1.05;
-    letter-spacing: -0.02em;
-    color: var(--text);
-    margin-bottom: 12px;
-  }
-  h1 em {
-    font-style: italic;
-    color: var(--accent);
-  }
-  .subtext {
-    color: var(--muted);
-    font-size: 15px;
-    font-weight: 400;
-    max-width: 500px;
-    line-height: 1.6;
-  }
+  .history-item.active .history-item-name { color: var(--accent); }
+  .history-item-meta { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  /* Form */
-  .form-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 32px;
-    margin-bottom: 32px;
-    position: relative;
-    overflow: hidden;
+  /* Three-dot menu button */
+  .item-menu-btn {
+    flex-shrink: 0; width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 5px; color: var(--muted); cursor: pointer;
+    transition: all 0.15s; background: none; border: none;
+    opacity: 0; margin-top: 1px;
   }
-  .form-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    opacity: 0.6;
-  }
-  .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .form-group.full { grid-column: 1 / -1; }
+  .history-item:hover .item-menu-btn { opacity: 1; }
+  .item-menu-btn:hover { color: var(--text); background: var(--border); }
+  .item-menu-btn svg { width: 13px; height: 13px; }
 
-  label {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
+  /* Dropdown menu */
+  .item-dropdown {
+    position: fixed; z-index: 999;
+    background: #1e1e22; border: 1px solid var(--border);
+    border-radius: 10px; padding: 5px;
+    min-width: 180px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    display: none;
   }
-  input, select, textarea {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
+  .item-dropdown.open { display: block; animation: popIn 0.12s ease; }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+  .dropdown-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 10px; border-radius: 7px; cursor: pointer;
+    font-size: 12.5px; font-weight: 500; color: var(--text);
+    transition: background 0.12s; white-space: nowrap;
     font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    padding: 12px 16px;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    outline: none;
-    width: 100%;
+  }
+  .dropdown-item:hover { background: var(--surface2); }
+  .dropdown-item.danger { color: #f87171; }
+  .dropdown-item.danger:hover { background: rgba(248,113,113,0.08); }
+  .dropdown-item svg { width: 13px; height: 13px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .dropdown-divider { height: 1px; background: var(--border); margin: 4px 5px; }
+
+  /* Rename inline input */
+  .rename-input {
+    background: var(--surface2); border: 1px solid var(--accent);
+    border-radius: 6px; color: var(--text);
+    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
+    padding: 3px 6px; width: 100%; outline: none;
+  }
+
+  .sidebar-footer { padding: 12px; border-top: 1px solid var(--border); flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+  .btn-new {
+    width: 100%; padding: 9px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; letter-spacing: 0.04em;
+  }
+  .btn-new:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-archive-tab {
+    width: 100%; padding: 8px; background: none;
+    border: 1px solid var(--border); border-radius: 8px; color: var(--muted);
+    font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; letter-spacing: 0.05em;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-archive-tab:hover { border-color: var(--muted); color: var(--text); }
+  .btn-archive-tab svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ── MAIN ── */
+  .main { margin-left: var(--sidebar-w); flex: 1; position: relative; z-index: 1; min-height: 100vh; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .form-view { max-width: 780px; margin: 0 auto; padding: 48px 32px 80px; }
+  .header { margin-bottom: 40px; }
+  .badge {
+    display: inline-block; font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent);
+    background: var(--tag-bg); border: 1px solid rgba(212,240,80,0.25);
+    padding: 4px 12px; border-radius: 100px; margin-bottom: 20px;
+  }
+  h1 { font-family: 'DM Serif Display', serif; font-size: clamp(32px,5vw,52px); line-height: 1.05; letter-spacing: -0.02em; margin-bottom: 10px; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .subtext { color: var(--muted); font-size: 14px; max-width: 480px; line-height: 1.6; }
+
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; position: relative; overflow: hidden; }
+  .form-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.5; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .form-group { display: flex; flex-direction: column; gap: 7px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  input, select, textarea {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 9px;
+    color: var(--text); font-family: 'Syne', sans-serif; font-size: 13.5px; padding: 11px 14px;
+    transition: border-color 0.2s, box-shadow 0.2s; outline: none; width: 100%;
   }
   input::placeholder, textarea::placeholder { color: var(--muted); }
-  input:focus, select:focus, textarea:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(212,240,80,0.08);
-  }
-  textarea { resize: vertical; min-height: 80px; }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(212,240,80,0.07); }
+  textarea { resize: vertical; min-height: 76px; }
   select option { background: var(--surface2); }
+  .checkbox-group { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 2px; }
+  .checkbox-item { display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+  .checkbox-item input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; padding: 0; }
+  .checkbox-item span { font-size: 12px; font-weight: 500; color: var(--text); text-transform: none; letter-spacing: 0; }
 
-  /* Checkboxes */
-  .checkbox-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 4px;
-  }
-  .checkbox-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    user-select: none;
-  }
-  .checkbox-item input[type="checkbox"] {
-    width: 16px; height: 16px;
-    accent-color: var(--accent);
-    cursor: pointer;
-    padding: 0;
-  }
-  .checkbox-item span {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text);
-    text-transform: none;
-    letter-spacing: 0;
-  }
-
-  /* CTA */
   .btn-generate {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    width: 100%;
-    padding: 16px 32px;
-    background: var(--accent);
-    color: #0c0c0e;
-    font-family: 'Syne', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-top: 8px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 15px; background: var(--accent); color: #0c0c0e;
+    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+    letter-spacing: 0.05em; text-transform: uppercase; border: none; border-radius: 11px;
+    cursor: pointer; transition: all 0.2s; margin-top: 8px;
   }
   .btn-generate:hover { background: #e0f760; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(212,240,80,0.2); }
   .btn-generate:active { transform: translateY(0); }
-  .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-  .btn-icon { font-size: 18px; }
+  .btn-generate:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
 
-  /* Loading */
-  .loading-state {
-    display: none;
-    text-align: center;
-    padding: 60px 40px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    margin-bottom: 32px;
-  }
+  .loading-state { display: none; text-align: center; padding: 60px 40px; }
   .loading-state.active { display: block; }
-  .spinner {
-    width: 40px;
-    height: 40px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 20px;
-  }
+  .spinner { width: 36px; height: 36px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    text-transform: uppercase;
-  }
-  .loading-dots::after {
-    content: '';
-    animation: dots 1.5s steps(4, end) infinite;
-  }
-  @keyframes dots {
-    0%, 20% { content: ''; }
-    40% { content: '.'; }
-    60% { content: '..'; }
-    80%, 100% { content: '...'; }
-  }
+  .loading-label { font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; }
+  .loading-dots::after { content: ''; animation: dots 1.5s steps(4,end) infinite; }
+  @keyframes dots { 0%,20%{content:''} 40%{content:'.'} 60%{content:'..'} 80%,100%{content:'...'} }
 
-  /* Output */
-  .output-wrapper {
-    display: none;
-    animation: fadeIn 0.4s ease;
+  /* Result view */
+  .result-view { max-width: 820px; margin: 0 auto; padding: 40px 32px 80px; animation: fadeUp 0.35s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .result-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+  .result-client { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--text); line-height: 1.1; }
+  .result-meta { font-size: 12px; color: var(--muted); margin-top: 4px; font-family: 'DM Mono', monospace; letter-spacing: 0.05em; }
+  .result-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .btn-sm {
+    font-size: 12px; font-weight: 600; font-family: 'Syne', sans-serif;
+    padding: 7px 14px; border-radius: 8px; cursor: pointer; transition: all 0.18s;
+    border: 1px solid var(--border); background: var(--surface2); color: var(--muted); letter-spacing: 0.04em;
   }
-  .output-wrapper.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .btn-sm:hover { color: var(--text); border-color: var(--text); }
+  .btn-sm.accent { background: var(--tag-bg); border-color: rgba(212,240,80,0.3); color: var(--accent); }
+  .btn-sm.accent:hover { background: rgba(212,240,80,0.15); }
 
-  .output-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-  }
-  .output-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 22px;
-    color: var(--accent);
-  }
-  .btn-reset {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted);
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 6px 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .btn-reset:hover { color: var(--text); border-color: var(--text); }
-
-  .output-content {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 36px;
-    line-height: 1.75;
-    font-size: 14.5px;
-    position: relative;
-    overflow: hidden;
-  }
-  .output-content::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent2), transparent);
-    opacity: 0.6;
-  }
-
-  /* Rendered markdown styles */
-  .output-content h2 {
-    font-family: 'DM Serif Display', serif;
-    font-size: 20px;
-    color: var(--accent);
-    margin: 32px 0 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-  }
+  .output-content { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 32px; line-height: 1.75; font-size: 14px; position: relative; overflow: hidden; }
+  .output-content::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--accent2), transparent); opacity: 0.5; }
+  .output-content h2 { font-family: 'DM Serif Display', serif; font-size: 19px; color: var(--accent); margin: 28px 0 10px; padding-bottom: 7px; border-bottom: 1px solid var(--border); }
   .output-content h2:first-child { margin-top: 0; }
-  .output-content h3 {
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--accent2);
-    margin: 24px 0 8px;
-  }
-  .output-content p { margin-bottom: 12px; color: #d0d0d8; }
-  .output-content ul, .output-content ol {
-    padding-left: 20px;
-    margin-bottom: 14px;
-  }
-  .output-content li { margin-bottom: 6px; color: #d0d0d8; }
+  .output-content h3 { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent2); margin: 20px 0 7px; }
+  .output-content p { margin-bottom: 11px; color: #d0d0d8; }
+  .output-content ul, .output-content ol { padding-left: 18px; margin-bottom: 12px; }
+  .output-content li { margin-bottom: 5px; color: #d0d0d8; }
   .output-content strong { color: var(--text); font-weight: 600; }
   .output-content em { color: var(--accent); font-style: normal; font-weight: 500; }
-  .output-content code {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    background: var(--surface2);
-    padding: 2px 7px;
-    border-radius: 5px;
-    color: var(--accent);
+  .output-content code { font-family: 'DM Mono', monospace; font-size: 12px; background: var(--surface2); padding: 2px 6px; border-radius: 4px; color: var(--accent); }
+  .output-content blockquote { border-left: 3px solid var(--accent); padding-left: 14px; margin: 14px 0; color: var(--muted); font-style: italic; }
+
+  .table-wrapper { position: relative; margin: 14px 0 22px; }
+  .table-copy-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted);
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 4px 10px; cursor: pointer; transition: all 0.2s; margin-bottom: 7px; float: right;
   }
-  .output-content table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 16px 0 24px;
-    font-size: 13px;
-  }
-  .output-content th {
-    background: var(--surface2);
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    font-weight: 600;
-    padding: 10px 14px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-  }
-  .output-content td {
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-    color: #d0d0d8;
-    vertical-align: top;
-  }
+  .table-copy-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--tag-bg); }
+  .table-copy-btn svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .table-scroll { overflow-x: auto; border-radius: 9px; border: 1px solid var(--border); clear: both; }
+  .table-scroll::-webkit-scrollbar { height: 5px; }
+  .table-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .table-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+  .output-content table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .output-content th { background: var(--surface2); font-size: 10.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 9px 13px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .output-content td { padding: 9px 13px; border-bottom: 1px solid var(--border); color: #d0d0d8; vertical-align: top; min-width: 110px; }
   .output-content tr:last-child td { border-bottom: none; }
-  .output-content blockquote {
-    border-left: 3px solid var(--accent);
-    padding-left: 16px;
-    margin: 16px 0;
-    color: var(--muted);
-    font-style: italic;
-  }
 
-  /* Copy button */
-  .btn-copy {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 6px 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-top: 24px;
-    font-family: 'Syne', sans-serif;
-  }
-  .btn-copy:hover { color: var(--text); border-color: var(--accent); }
-
-  /* Error */
-  .error-msg {
-    display: none;
-    background: rgba(239, 68, 68, 0.08);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    border-radius: 10px;
-    padding: 16px 20px;
-    color: #fca5a5;
-    font-size: 14px;
-    margin-bottom: 24px;
-  }
+  .error-msg { display: none; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); border-radius: 9px; padding: 14px 18px; color: #fca5a5; font-size: 13px; margin-top: 12px; }
   .error-msg.active { display: block; }
 
-  @media (max-width: 640px) {
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(10px);
+    background: #1e1e22; border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 18px; font-size: 13px; color: var(--text); font-family: 'Syne', sans-serif;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); opacity: 0; transition: all 0.25s; z-index: 9999;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 700px) {
+    :root { --sidebar-w: 220px; }
     .form-grid { grid-template-columns: 1fr; }
     .form-group.full { grid-column: 1; }
-    .container { padding: 32px 16px 60px; }
-    .output-content { padding: 24px; }
+    .form-view, .result-view { padding: 24px 16px 60px; }
   }
 </style>
 </head>
 <body>
-<div class="container">
 
-  <div class="header">
-    <div class="badge">Elephant Phunk · Strategy Engine</div>
-    <h1>Content<br>Strategy <em>Generator</em></h1>
-    <p class="subtext">Fill in the client brief. Get a full content strategy — pillars, clusters, priority topics, and buyer-stage mapping — in seconds.</p>
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">
+      Ayaa's
+      <span>Content Strategy Engine</span>
+    </div>
   </div>
 
-  <div class="form-card" id="formCard">
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Client / Brand Name</label>
-        <input type="text" id="brand" placeholder="e.g. Fortis, Plexus Aviation" />
+  <div class="sidebar-section">
+    <div class="sidebar-tab-row">
+      <button class="sidebar-tab active" id="tabActive" onclick="switchTab('active')">Active</button>
+      <button class="sidebar-tab" id="tabArchive" onclick="switchTab('archive')">Archive</button>
+    </div>
+
+    <!-- Active panel -->
+    <div class="sidebar-panel active" id="panelActive">
+      <div class="sidebar-list" id="sidebarList">
+        <div class="sidebar-empty" id="sidebarEmpty">No strategies yet.<br>Generate your first one!</div>
       </div>
-      <div class="form-group">
-        <label>Industry</label>
-        <input type="text" id="industry" placeholder="e.g. Fintech, Private Aviation" />
+    </div>
+
+    <!-- Archive panel -->
+    <div class="sidebar-panel" id="panelArchive">
+      <div class="sidebar-list" id="archiveList">
+        <div class="sidebar-empty" id="archiveEmpty">No archived strategies.</div>
       </div>
-      <div class="form-group full">
-        <label>What does the brand do?</label>
-        <textarea id="description" placeholder="Briefly describe the product/service, who it's for, and the core value it offers..."></textarea>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <button class="btn-new" onclick="showForm()">＋ New Strategy</button>
+  </div>
+</div>
+
+<!-- Dropdown (shared, moved by JS) -->
+<div class="item-dropdown" id="itemDropdown">
+  <div class="dropdown-item" id="ddCopyLink" onclick="ddAction('copylink')">
+    <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    Copy Strategy Link
+  </div>
+  <div class="dropdown-item" id="ddPin" onclick="ddAction('pin')">
+    <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    Pin Strategy
+  </div>
+  <div class="dropdown-item" id="ddRename" onclick="ddAction('rename')">
+    <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Rename
+  </div>
+  <div class="dropdown-item" id="ddArchive" onclick="ddAction('archive')">
+    <svg viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+    Archive
+  </div>
+  <div class="dropdown-divider"></div>
+  <div class="dropdown-item danger" id="ddDelete" onclick="ddAction('delete')">
+    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    Delete
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- FORM VIEW -->
+  <div class="view active" id="formView">
+    <div class="form-view">
+      <div class="header">
+        <div class="badge">Strategy Generator</div>
+        <h1>Content<br>Strategy <em>Generator</em></h1>
+        <p class="subtext">Fill in the client brief and get a full content strategy — pillars, clusters, priority topics, and buyer-stage mapping.</p>
       </div>
-      <div class="form-group">
-        <label>Target Audience</label>
-        <input type="text" id="audience" placeholder="e.g. Egyptian white-collar, HNWIs" />
+      <div class="form-card">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Client / Brand Name</label>
+            <input type="text" id="brand" placeholder="e.g. Fortis, Plexus Aviation" />
+          </div>
+          <div class="form-group">
+            <label>Industry</label>
+            <input type="text" id="industry" placeholder="e.g. Fintech, Private Aviation" />
+          </div>
+          <div class="form-group full">
+            <label>What does the brand do?</label>
+            <textarea id="description" placeholder="Briefly describe the product/service, who it's for, and the core value it offers..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Target Audience</label>
+            <input type="text" id="audience" placeholder="e.g. Egyptian white-collar, HNWIs" />
+          </div>
+          <div class="form-group">
+            <label>Primary Content Goal</label>
+            <select id="goal" onchange="toggleOtherGoal(this.value)">
+              <option value="">Select a goal</option>
+              <option value="brand awareness">Brand Awareness</option>
+              <option value="lead generation">Lead Generation</option>
+              <option value="thought leadership">Thought Leadership</option>
+              <option value="traffic & SEO">Traffic & SEO</option>
+              <option value="community building">Community Building</option>
+              <option value="retention & loyalty">Retention & Loyalty</option>
+              <option value="other">Other</option>
+            </select>
+            <input type="text" id="goalOther" placeholder="Describe your goal..." style="display:none; margin-top:8px;" />
+          </div>
+          <div class="form-group">
+            <label>Main Competitors (optional)</label>
+            <input type="text" id="competitors" placeholder="e.g. Competitor A, Competitor B" />
+          </div>
+          <div class="form-group">
+            <label>Client Website (optional)</label>
+            <input type="url" id="website" placeholder="e.g. https://fortis.com" />
+          </div>
+          <div class="form-group">
+            <label>Key Customer Pain Points</label>
+            <textarea id="painpoints" placeholder="What problems do customers face?" style="min-height:64px;"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Content Formats Available</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item"><input type="checkbox" value="written articles" checked> <span>Articles</span></label>
+              <label class="checkbox-item"><input type="checkbox" value="social media posts" checked> <span>Social</span></label>
+              <label class="checkbox-item"><input type="checkbox" value="video"> <span>Video</span></label>
+              <label class="checkbox-item"><input type="checkbox" value="email newsletters"> <span>Email</span></label>
+              <label class="checkbox-item"><input type="checkbox" value="infographics"> <span>Infographics</span></label>
+              <label class="checkbox-item"><input type="checkbox" value="case studies"> <span>Case Studies</span></label>
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>Language / Market</label>
+            <select id="language">
+              <option value="English (Egyptian market)">English – Egyptian Market</option>
+              <option value="Arabic (Egyptian dialect)">Arabic – Egyptian Market</option>
+              <option value="English (Saudi market)">English – Saudi Market</option>
+              <option value="Arabic (Saudi market)">Arabic – Saudi Market</option>
+              <option value="Bilingual English/Arabic">Bilingual English + Arabic</option>
+              <option value="English (regional MENA)">English – Regional MENA</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-generate" id="generateBtn" onclick="generateStrategy()">
+          <span>⚡</span> Generate Content Strategy
+        </button>
+        <div class="error-msg" id="errorMsg"></div>
       </div>
-      <div class="form-group">
-        <label>Primary Content Goal</label>
-        <select id="goal" onchange="toggleOtherGoal(this.value)">
-          <option value="">Select a goal</option>
-          <option value="brand awareness">Brand Awareness</option>
-          <option value="lead generation">Lead Generation</option>
-          <option value="thought leadership">Thought Leadership</option>
-          <option value="traffic & SEO">Traffic & SEO</option>
-          <option value="community building">Community Building</option>
-          <option value="retention & loyalty">Retention & Loyalty</option>
-          <option value="other">Other</option>
-        </select>
-        <input type="text" id="goalOther" placeholder="Describe your goal..." style="display:none; margin-top:8px;" />
+      <div class="loading-state" id="loadingState">
+        <div class="spinner"></div>
+        <div class="loading-label">Building your strategy<span class="loading-dots"></span></div>
       </div>
-      <div class="form-group">
-        <label>Main Competitors (optional)</label>
-        <input type="text" id="competitors" placeholder="e.g. Competitor A, Competitor B" />
-      </div>
-      <div class="form-group">
-        <label>Client Website (optional)</label>
-        <input type="url" id="website" placeholder="e.g. https://fortis.com" />
-      </div>
-      <div class="form-group">
-        <label>Key Customer Pain Points</label>
-        <textarea id="painpoints" placeholder="What problems do customers face that this brand solves?" style="min-height:64px;"></textarea>
-      </div>
-      <div class="form-group">
-        <label>Content Formats Available</label>
-        <div class="checkbox-group">
-          <label class="checkbox-item"><input type="checkbox" value="written articles" checked> <span>Articles</span></label>
-          <label class="checkbox-item"><input type="checkbox" value="social media posts" checked> <span>Social</span></label>
-          <label class="checkbox-item"><input type="checkbox" value="video"> <span>Video</span></label>
-          <label class="checkbox-item"><input type="checkbox" value="email newsletters"> <span>Email</span></label>
-          <label class="checkbox-item"><input type="checkbox" value="infographics"> <span>Infographics</span></label>
-          <label class="checkbox-item"><input type="checkbox" value="case studies"> <span>Case Studies</span></label>
+    </div>
+  </div>
+
+  <!-- RESULT VIEW -->
+  <div class="view" id="resultView">
+    <div class="result-view">
+      <div class="result-header">
+        <div class="result-title-block">
+          <div class="result-client" id="resultClient">—</div>
+          <div class="result-meta" id="resultMeta">—</div>
+        </div>
+        <div class="result-actions">
+          <button class="btn-sm accent" onclick="copyCurrentOutput()">📋 Copy All</button>
+          <button class="btn-sm" onclick="showForm()">＋ New</button>
         </div>
       </div>
-      <div class="form-group full">
-        <label>Language / Market</label>
-        <select id="language">
-          <option value="English (Egyptian market)">English – Egyptian Market</option>
-          <option value="Arabic (Egyptian dialect)">Arabic – Egyptian Market</option>
-          <option value="English (Saudi market)">English – Saudi Market</option>
-          <option value="Arabic (Saudi market)">Arabic – Saudi Market</option>
-          <option value="Bilingual English/Arabic">Bilingual English + Arabic</option>
-          <option value="English (regional MENA)">English – Regional MENA</option>
-        </select>
-      </div>
+      <div class="output-content" id="outputContent"></div>
     </div>
-    <button class="btn-generate" id="generateBtn" onclick="generateStrategy()">
-      <span class="btn-icon">⚡</span> Generate Content Strategy
-    </button>
-  </div>
-
-  <div class="error-msg" id="errorMsg"></div>
-
-  <div class="loading-state" id="loadingState">
-    <div class="spinner"></div>
-    <div class="loading-label">Building your strategy<span class="loading-dots"></span></div>
-  </div>
-
-  <div class="output-wrapper" id="outputWrapper">
-    <div class="output-header">
-      <div class="output-title">Strategy Ready</div>
-      <button class="btn-reset" onclick="resetForm()">← New Strategy</button>
-    </div>
-    <div class="output-content" id="outputContent"></div>
-    <button class="btn-copy" onclick="copyOutput()">📋 Copy to Clipboard</button>
   </div>
 
 </div>
 
 <script>
-  function getCheckedFormats() {
-    const boxes = document.querySelectorAll('.checkbox-item input[type="checkbox"]');
-    return Array.from(boxes).filter(b => b.checked).map(b => b.value).join(', ');
+  // ── State ──
+  let strategies = JSON.parse(localStorage.getItem('ayaa_strategies') || '[]');
+  let currentId = null;
+  let ddTargetId = null;
+  let currentTab = 'active';
+
+  // close dropdown on outside click
+  document.addEventListener('click', e => {
+    const dd = document.getElementById('itemDropdown');
+    if (!dd.contains(e.target) && !e.target.closest('.item-menu-btn')) {
+      dd.classList.remove('open');
+      ddTargetId = null;
+    }
+  });
+
+  // ── Init ──
+  renderSidebar();
+
+  // ── Tab switch ──
+  function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tabActive').classList.toggle('active', tab === 'active');
+    document.getElementById('tabArchive').classList.toggle('active', tab === 'archive');
+    document.getElementById('panelActive').classList.toggle('active', tab === 'active');
+    document.getElementById('panelArchive').classList.toggle('active', tab === 'archive');
   }
 
+  // ── Toast ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  // ── Views ──
+  function showForm() {
+    document.getElementById('formView').classList.add('active');
+    document.getElementById('resultView').classList.remove('active');
+    document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
+    currentId = null;
+  }
+
+  function showResult(id) {
+    const item = strategies.find(h => h.id === id);
+    if (!item) return;
+    currentId = id;
+    document.getElementById('resultClient').textContent = item.brand;
+    const pinBadge = item.pinned ? '📌 ' : '';
+    const archBadge = item.archived ? '🗃 Archived · ' : '';
+    document.getElementById('resultMeta').textContent = pinBadge + archBadge + item.goal + ' · ' + item.date;
+    document.getElementById('outputContent').innerHTML = item.html;
+    document.getElementById('formView').classList.remove('active');
+    document.getElementById('resultView').classList.add('active');
+    document.querySelectorAll('.history-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.id === id);
+    });
+    window.scrollTo({ top: 0 });
+  }
+
+  // ── Sidebar render ──
+  function renderSidebar() {
+    renderPanel('sidebarList', 'sidebarEmpty', strategies.filter(s => !s.archived), 'No strategies yet.\nGenerate your first one!');
+    renderPanel('archiveList', 'archiveEmpty', strategies.filter(s => s.archived), 'No archived strategies.');
+  }
+
+  function renderPanel(listId, emptyId, items, emptyMsg) {
+    const list = document.getElementById(listId);
+    const empty = document.getElementById(emptyId);
+    list.querySelectorAll('.history-item').forEach(el => el.remove());
+
+    if (items.length === 0) {
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    // Pinned first, then by date desc
+    const sorted = [...items].sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return b.id.localeCompare(a.id);
+    });
+
+    sorted.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'history-item' + (item.id === currentId ? ' active' : '') + (item.pinned ? ' pinned' : '');
+      el.dataset.id = item.id;
+      el.innerHTML = `
+        <div class="history-item-info">
+          <div class="history-item-name">${item.brand}</div>
+          <div class="history-item-meta">${item.goal} · ${item.date}</div>
+        </div>
+        <button class="item-menu-btn" title="Options" onclick="openDropdown(event,'${item.id}')">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+          </svg>
+        </button>
+      `;
+      el.querySelector('.history-item-info').addEventListener('click', () => showResult(item.id));
+      list.appendChild(el);
+    });
+  }
+
+  // ── Dropdown ──
+  function openDropdown(e, id) {
+    e.stopPropagation();
+    ddTargetId = id;
+    const item = strategies.find(s => s.id === id);
+    const dd = document.getElementById('itemDropdown');
+
+    // Update pin label
+    document.getElementById('ddPin').querySelector('svg').innerHTML = item.pinned
+      ? '<path d="M12 17.77L6.18 21l1-6.88-5-4.87 6.91-1.01L12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88z" fill="currentColor" stroke="none"/>'
+      : '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>';
+    document.getElementById('ddPin').childNodes[2].textContent = item.pinned ? ' Unpin' : ' Pin Strategy';
+
+    // Update archive label
+    document.getElementById('ddArchive').querySelector('svg + text, svg').nextSibling
+    document.getElementById('ddArchive').childNodes[2].textContent = item.archived ? ' Unarchive' : ' Archive';
+
+    // Position dropdown near button
+    const btn = e.currentTarget;
+    const rect = btn.getBoundingClientRect();
+    dd.style.top = (rect.bottom + 4) + 'px';
+    dd.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
+    dd.classList.add('open');
+  }
+
+  function ddAction(action) {
+    const dd = document.getElementById('itemDropdown');
+    dd.classList.remove('open');
+    const id = ddTargetId;
+    if (!id) return;
+
+    if (action === 'copylink') {
+      const url = window.location.href.split('#')[0] + '#' + id;
+      navigator.clipboard.writeText(url).then(() => showToast('🔗 Link copied!'));
+    }
+    else if (action === 'pin') {
+      const item = strategies.find(s => s.id === id);
+      item.pinned = !item.pinned;
+      save();
+      showToast(item.pinned ? '📌 Strategy pinned' : 'Unpinned');
+    }
+    else if (action === 'rename') {
+      const el = document.querySelector(`.history-item[data-id="${id}"] .history-item-name`);
+      if (!el) return;
+      const item = strategies.find(s => s.id === id);
+      const inp = document.createElement('input');
+      inp.className = 'rename-input';
+      inp.value = item.brand;
+      el.replaceWith(inp);
+      inp.focus(); inp.select();
+      function commit() {
+        const val = inp.value.trim() || item.brand;
+        item.brand = val;
+        save();
+        if (currentId === id) document.getElementById('resultClient').textContent = val;
+      }
+      inp.addEventListener('blur', commit);
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); if (e.key === 'Escape') { inp.value = item.brand; inp.blur(); } });
+    }
+    else if (action === 'archive') {
+      const item = strategies.find(s => s.id === id);
+      item.archived = !item.archived;
+      if (item.archived && currentId === id) showForm();
+      save();
+      showToast(item.archived ? '🗃 Strategy archived' : '✅ Restored to active');
+      // switch to archive tab if archiving
+      if (item.archived) switchTab('archive');
+    }
+    else if (action === 'delete') {
+      strategies = strategies.filter(s => s.id !== id);
+      if (currentId === id) showForm();
+      save();
+      showToast('🗑 Strategy deleted');
+    }
+  }
+
+  function save() {
+    localStorage.setItem('ayaa_strategies', JSON.stringify(strategies));
+    renderSidebar();
+  }
+
+  function saveToHistory(brand, goal, html) {
+    const now = new Date();
+    const date = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    const id = 'str_' + Date.now();
+    strategies.push({ id, brand, goal, date, html, pinned: false, archived: false });
+    save();
+    return id;
+  }
+
+  // ── Form helpers ──
+  function getCheckedFormats() {
+    return Array.from(document.querySelectorAll('.checkbox-item input[type="checkbox"]'))
+      .filter(b => b.checked).map(b => b.value).join(', ');
+  }
+  function toggleOtherGoal(val) {
+    const el = document.getElementById('goalOther');
+    el.style.display = val === 'other' ? 'block' : 'none';
+    if (val !== 'other') el.value = '';
+  }
+
+  // ── Markdown ──
   function simpleMarkdown(text) {
-    // Headers
     text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
     text = text.replace(/^## (.+)$/gm, '<h2>$1</h2>');
     text = text.replace(/^# (.+)$/gm, '<h2>$1</h2>');
-    // Bold/italic
     text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    // Code
     text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-    // Blockquotes
     text = text.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
-    // Tables
     text = text.replace(/(\|.+\|\n)+/g, (table) => {
       const rows = table.trim().split('\n');
-      let html = '<table>';
+      const plainRows = rows.filter(r => !r.match(/^\|[-:\s|]+\|$/));
+      const plainText = plainRows.map(r =>
+        r.split('|').filter((_, j, a) => j > 0 && j < a.length - 1).map(c => c.trim()).join('\t')
+      ).join('\n');
+      const encoded = encodeURIComponent(plainText);
+      let html = `<div class="table-wrapper"><button class="table-copy-btn" onclick="copyTable(this,'${encoded}')"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Table</button><div class="table-scroll"><table>`;
       rows.forEach((row, i) => {
-        if (row.match(/^\|[-:\s|]+\|$/)) return; // skip separator
+        if (row.match(/^\|[-:\s|]+\|$/)) return;
         const cells = row.split('|').filter((_, j, a) => j > 0 && j < a.length - 1);
         const tag = i === 0 ? 'th' : 'td';
         html += '<tr>' + cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join('') + '</tr>';
       });
-      return html + '</table>';
+      return html + '</table></div></div>';
     });
-    // Lists
     text = text.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
     text = text.replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
     text = text.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-    // Paragraphs
     const lines = text.split('\n');
-    let result = '';
-    let inBlock = false;
+    let result = '', inBlock = false;
     for (const line of lines) {
       if (!line.trim()) { if (inBlock) { result += '</p>'; inBlock = false; } continue; }
       if (line.startsWith('<')) { if (inBlock) { result += '</p>'; inBlock = false; } result += line + '\n'; continue; }
@@ -543,12 +691,25 @@
     return result;
   }
 
-  function toggleOtherGoal(val) {
-    const otherInput = document.getElementById('goalOther');
-    otherInput.style.display = val === 'other' ? 'block' : 'none';
-    if (val !== 'other') otherInput.value = '';
+  function copyTable(btn, encoded) {
+    navigator.clipboard.writeText(decodeURIComponent(encoded)).then(() => {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+      btn.style.color = 'var(--accent)';
+      setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
+    });
   }
 
+  async function copyCurrentOutput() {
+    const text = document.getElementById('outputContent').innerText;
+    await navigator.clipboard.writeText(text);
+    const btn = document.querySelector('.btn-sm.accent');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = orig, 2000);
+  }
+
+  // ── Generate ──
   async function generateStrategy() {
     const brand = document.getElementById('brand').value.trim();
     const industry = document.getElementById('industry').value.trim();
@@ -573,7 +734,6 @@
 
     document.getElementById('generateBtn').disabled = true;
     document.getElementById('loadingState').classList.add('active');
-    document.getElementById('outputWrapper').classList.remove('active');
     document.getElementById('errorMsg').classList.remove('active');
 
     const prompt = `You are a senior content strategist at a top-tier digital marketing agency in Cairo.
@@ -622,50 +782,27 @@ Be specific, sharp, and actionable. No filler. Tailor everything to the ${langua
     try {
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-api-key": "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", "anthropic-version": "2023-06-01" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
           max_tokens: 4000,
           messages: [{ role: "user", content: prompt }]
         })
       });
-
       if (!response.ok) throw new Error(`API error ${response.status}`);
       const data = await response.json();
       const raw = data.content?.map(b => b.text || '').join('\n') || '';
-
-      document.getElementById('outputContent').innerHTML = simpleMarkdown(raw);
-      document.getElementById('outputWrapper').classList.add('active');
+      const html = simpleMarkdown(raw);
+      const id = saveToHistory(brand, goal, html);
+      showResult(id);
     } catch (err) {
       const errEl = document.getElementById('errorMsg');
-      errEl.textContent = 'Something went wrong generating the strategy. Please try again.';
+      errEl.textContent = 'Something went wrong. Please try again.';
       errEl.classList.add('active');
     } finally {
       document.getElementById('loadingState').classList.remove('active');
       document.getElementById('generateBtn').disabled = false;
     }
-  }
-
-  function resetForm() {
-    document.getElementById('outputWrapper').classList.remove('active');
-    document.getElementById('brand').value = '';
-    document.getElementById('industry').value = '';
-    document.getElementById('description').value = '';
-    document.getElementById('audience').value = '';
-    document.getElementById('goal').value = '';
-    document.getElementById('competitors').value = '';
-    document.getElementById('painpoints').value = '';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  async function copyOutput() {
-    const text = document.getElementById('outputContent').innerText;
-    try {
-      await navigator.clipboard.writeText(text);
-      const btn = document.querySelector('.btn-copy');
-      btn.textContent = '✓ Copied!';
-      setTimeout(() => btn.textContent = '📋 Copy to Clipboard', 2000);
-    } catch {}
   }
 </script>
 </body>
